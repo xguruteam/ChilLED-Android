@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:layout_margin="15dp">
+
+    <LinearLayout
+        android:id="@+id/layout_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MTU" />
+
+        <EditText
+            android:id="@+id/editCommand"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ems="10"
+            android:inputType="textPersonName"
+            android:text="200"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/Write"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Start" />
+
+    <TextView
+        android:id="@+id/textViewSent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Bytes Sent : 0" />
+
+    <TextView
+        android:id="@+id/textViewSentSpeed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=" KB/s" />
+
+    <TextView
+        android:id="@+id/textViewReceived"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Bytes Received : 0" />
+
+    <TextView
+        android:id="@+id/textViewReceivedSpeed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=" KB/s" />
+
+    <TextView
+        android:id="@+id/textViewErrors"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Error Packets : 0" />
+
+    <TextView
+        android:id="@+id/console"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:fadeScrollbars="false"
+        android:scrollbars="vertical"
+        android:text="console started\n"
+        android:textSize="13sp"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/clear_console"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Clear Console"
+        android:visibility="gone" />
+
+
+</LinearLayout>
