@@ -10,6 +10,7 @@ android {
         targetSdkVersion 27
         versionCode 232
         versionName "2.3.2"
+        setProperty("archivesBaseName", "ChilLED-$versionName($versionCode)")
     }
     buildTypes {
         release {

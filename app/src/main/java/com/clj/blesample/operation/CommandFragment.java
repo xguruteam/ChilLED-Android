@@ -29,6 +29,7 @@ import com.clj.fastble.utils.HexUtil;
 
 import org.w3c.dom.Text;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -50,24 +51,15 @@ import java.util.UUID;
 public class CommandFragment extends Fragment {
 
 
-    boolean isWorking = false;
+    public static final int MTU = 20;
 
     BleDevice bleDevice = null;
     BluetoothGattCharacteristic sendChar = null;
     BluetoothGattCharacteristic recvChar = null;
-    int totalSent = 0;
-    int totalReceived = 0;
-    int totalError = 0;
-    long startTime = 0;
 
     View contentView = null;
 
-    Timer mainTimer = null;
-
-    boolean noRespone = false;
-
-    ByteArrayOutputStream buff;
-    int mtu = 200;
+    ByteArrayOutputStream buff = new ByteArrayOutputStream();
 
     public CommandFragment() {
         // Required empty public constructor
@@ -95,7 +87,7 @@ public class CommandFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(LayoutInflater inflater, final ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_command, container, false);
@@ -110,195 +102,255 @@ public class CommandFragment extends Fragment {
         sendChar = null;
         recvChar = null;
 
-//        txt_name.setText(String.valueOf(getActivity().getString(R.string.name) + name));
-//        txt_mac.setText(String.valueOf(getActivity().getString(R.string.mac) + mac));
-
-        final TextView txt = (TextView) v.findViewById(R.id.console);
-//        txt.setMovementMethod(ScrollingMovementMethod.getInstance());
-
-//        Button clearConsole = (Button) v.findViewById(R.id.clear_console);
-//        clearConsole.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                txt.setText("console started\n");
-//            }
-//        });
-
-
-//        mResultAdapter.clear();
         for (BluetoothGattService service : gatt.getServices()) {
-//            mResultAdapter.addResult(service);
             Log.e("detected service uuid: ", service.getUuid().toString());
 
             String gattServiceUUID = Long.toHexString(
                     service.getUuid().getMostSignificantBits())
                     .substring(0, 4);
 
-//            addText(txt, "detected service uuid: " + gattServiceUUID);
 
             for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
-//                Log.e("detected characteristic uuid: ", service.getUuid().toString());
                 String characterUUID = Long.toHexString(
                         characteristic.getUuid()
                                 .getMostSignificantBits()).substring(0, 4);
 
-//                addText(txt, "detected characteristic uuid: " + characterUUID);
 
                 if (gattServiceUUID.equals("ffe5") && characterUUID.equals("ffe9")) {
                     Toast.makeText(getActivity(), "successfully detected ffe5:ffe9", Toast.LENGTH_SHORT);
-//                    addText(txt, "successfully detected ffe5:ffe9");
                     sendChar = characteristic;
                 }
 
                 if (gattServiceUUID.equals("ffe0") && characterUUID.equals("ffe4")) {
                     Toast.makeText(getActivity(), "successfully detected ffe0:ffe4", Toast.LENGTH_SHORT);
-//                    addText(txt, "successfully detected ffe0:ffe4");
                     recvChar = characteristic;
 
-                    openNotifiy(bleDevice, characteristic, txt);
+                    openNotifiy(bleDevice, characteristic);
                 }
             }
         }
-//        mResultAdapter.notifyDataSetChanged();
-
-        final EditText et = (EditText) v.findViewById(R.id.editCommand);
-        final BluetoothGattCharacteristic characteristic = sendChar;
 
 
-        final Button btnWrite = (Button) v.findViewById(R.id.Write);
-        btnWrite.setOnClickListener(new View.OnClickListener() {
+        Button button;
+
+        button = v.findViewById(R.id.btClear);
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                TextView textView;
 
-                if (isWorking) {
-                    btnWrite.setText("Start");
-                }
-                else {
-                    btnWrite.setText("Stop");
-                    totalReceived = 0;
-                    totalError = 0;
-                    totalSent = 0;
-                    startTime = new Date().getTime();
-                    String hex = et.getText().toString();
-                    if (TextUtils.isEmpty(hex)) {
-                        Toast.makeText(getActivity(), "no command", Toast.LENGTH_SHORT);
-                        et.setText("20");
-                        hex = "20";
-                    }
-
-                    mtu = Integer.valueOf(hex);
-                    buff = new ByteArrayOutputStream();
-
-                    write();
-                }
-                isWorking = !isWorking;
-
+                textView = (TextView) contentView.findViewById(R.id.tvID);
+                textView.setText("");
+                textView = (TextView) contentView.findViewById(R.id.tvIS);
+                textView.setText("");
+                textView = (TextView) contentView.findViewById(R.id.tvLS);
+                textView.setText("");
+                textView = (TextView) contentView.findViewById(R.id.tvblaa55);
+                textView.setText("");
+                textView = (TextView) contentView.findViewById(R.id.tvbuaa55);
+                textView.setText("");
+                textView = (TextView) contentView.findViewById(R.id.tvcd);
+                textView.setText("");
+                textView = (TextView) contentView.findViewById(R.id.tvcu);
+                textView.setText("");
             }
         });
 
-        mainTimer = null;
+        button = v.findViewById(R.id.btID);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendID();
+            }
+        });
 
-        refreshRate(0, 0);
+        button = v.findViewById(R.id.btIS);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendIS();
+            }
+        });
+
+        button = v.findViewById(R.id.btLM0F);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendLM0F();
+            }
+        });
+
+        button = v.findViewById(R.id.btLM1E);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendLM1E();
+            }
+        });
+
+        button = v.findViewById(R.id.btLS);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendLS();
+            }
+        });
+
+        button = v.findViewById(R.id.btblaa55);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendBLAA55();
+            }
+        });
+
+        button = v.findViewById(R.id.btbuaa55);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendBUAA55();
+            }
+        });
+
+        button = v.findViewById(R.id.btcd);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EditText editText = (EditText) contentView.findViewById(R.id.etcd);
+                sendCD(editText.getText().toString());
+            }
+        });
+
+        button = v.findViewById(R.id.btcu);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EditText editText = (EditText) contentView.findViewById(R.id.etcu);
+                sendCU(editText.getText().toString());
+            }
+        });
 
         return v;
     }
 
-    private void write(/*final BleDevice bleDevice, final BluetoothGattCharacteristic characteristic, final TextView txt, final EditText et*/) {
+    private void sendID() {
+        byte[] packet = makePacket("ID");
+        write(packet);
+    }
+
+    private void sendIS() {
+        byte[] packet = makePacket("IS");
+        write(packet);
+    }
+
+    private void sendLM0F() {
+        byte[] packet = makePacket("LM", "0F");
+        write(packet);
+    }
+
+    private void sendLM1E() {
+        byte[] packet = makePacket("LM", "1E");
+        write(packet);
+    }
+
+    private void sendLS() {
+        byte[] packet = makePacket("LS");
+        write(packet);
+    }
+
+    private void sendBLAA55() {
+        byte[] packet = makePacket("BL", "AA55");
+        write(packet);
+    }
+
+    private void sendBUAA55() {
+        byte[] packet = makePacket("BU", "AA55");
+        write(packet);
+    }
+
+    private void sendCD(String address) {
+        if (address == null || address.length() != 4) return;
+        
+        byte[] packet = makePacket("CD", address, true, true);
+        write(packet);
+    }
+
+    private void sendCU(String address) {
+        if (address == null || address.length() != 4) return;
+
+        byte[] packet = makePacket("CU", address, true, true);
+        write(packet);
+    }
+
+    private byte[] makePacket(String command) {
+        return makePacket(command, null, false, true);
+    }
+
+    private byte[] makePacket(String command, String data) {
+        return makePacket(command, data, false, true);
+    }
+
+    private byte[] makePacket(String command, String data, boolean need2C, boolean endWithCR) {
+        String packetX = null;
+
+        packetX = command + ":";
+
+        if (data != null) {
+            packetX += data;
+        }
+
+        int paddingLength = MTU - packetX.length();
+        if (need2C) paddingLength -= 2;
+        if (endWithCR) paddingLength -= 1;
+
+        if (paddingLength < 0) return null;
+
+        while (paddingLength > 0) {
+            packetX += " "; // a space
+            paddingLength --;
+        }
+
+        if (need2C) packetX += "00";
+
+        if (endWithCR) packetX += "\r";
+
+        return packetX.getBytes();
+    }
+
+    private void write(byte[] packet) {
         if (bleDevice == null) {
             Toast.makeText(getActivity(), "no ble device", Toast.LENGTH_SHORT);
-//            addText(txt, "no ble device");
         }
 
         Log.e("ble device", bleDevice.getName());
 
         if (sendChar == null) {
             Toast.makeText(getActivity(), "no characteristic", Toast.LENGTH_SHORT);
-//            addText(txt, "no characteristic");
             return;
         }
 
-        String mtuHex = Integer.toHexString(mtu - 1);
-
-        byte[] mtuAscii = mtuHex.getBytes(StandardCharsets.US_ASCII);
-
-//        int mtu = Integer.valueOf(hex);
-        String command = "2A" + HexUtil.formatHexString(mtuAscii) + "303132333435363738394142434445460D";
-//        for (int i = 0; i < mtu - 4; i++) {
-//            command += "20";
-//        }
-//
-//        command += "0D";
-
-        Log.e("xxxx", "command:" + command);
-
-        buff.reset();
+        if (packet== null || packet.length > MTU) return;
 
         BleManager.getInstance().write(
                 bleDevice,
                 sendChar.getService().getUuid().toString(),
                 sendChar.getUuid().toString(),
-                HexUtil.hexStringToBytes(command),
+                packet,
                 true,
                 new BleWriteCallback() {
 
                     @Override
                     public void onWriteSuccess(final int current, final int total, final byte[] justWrite) {
-//                        if (isWorking) write(bleDevice, characteristic, txt, et);
-                        getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-
-                                refreshRate(justWrite.length, 0);
-//                                addText(txt, "write success, current: " + current
-//                                        + " total: " + justWrite.length
-//                                        /*+ " justWrite: " + HexUtil.formatHexString(justWrite, true)*/);
-                            }
-                        });
                     }
 
                     @Override
                     public void onWriteFailure(final BleException exception) {
-                        try {
-                            getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-//                                addText(txt, exception.toString());
-                                }
-                            });
-                        }
-                        catch (NullPointerException e) {
-
-                        }
                     }
                 });
 
-        if (mainTimer != null ) {
-            mainTimer.cancel();
-            mainTimer.purge();
-            mainTimer = null;
-        }
-
-        mainTimer = new Timer();
-        mainTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-
-                totalError ++;
-                if (isWorking) write();
-
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        refreshRate(0, 0);
-                    }
-                });
-            }
-        }, 200);
-
-//        addText(txt, "command has been sent to " + bleDevice.getName() + ":" + characteristic.getUuid().toString());
     }
 
-    private void openNotifiy(final BleDevice bleDevice, final BluetoothGattCharacteristic characteristic, final TextView txt) {
+    private void openNotifiy(final BleDevice bleDevice, final BluetoothGattCharacteristic characteristic) {
         BleManager.getInstance().notify(
                 bleDevice,
                 characteristic.getService().getUuid().toString(),
@@ -334,20 +386,8 @@ public class CommandFragment extends Fragment {
                             Log.e("xxxx", "onChangeLL:" + data.length);
                             Log.e("xxxx", "onChange1:" + HexUtil.formatHexString(data));
                             buff.write(data);
-                            final int length = buff.size();
-                            if (length >= mtu) {
-                                if (mainTimer != null ) {
-                                    mainTimer.cancel();
-                                    mainTimer.purge();
-                                    mainTimer = null;
-                                }
-                                getActivity().runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        refreshRate(0, length);
-                                    }
-                                });
-                                if (isWorking) write();
+                            if (isEndingWithCR(data)) {
+                                parse();
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -356,57 +396,106 @@ public class CommandFragment extends Fragment {
                 });
     }
 
-    private void addText(TextView textView, String content) {
-        textView.append(content);
-        textView.append("\n");
-        int offset = textView.getLineCount() * textView.getLineHeight();
-        if (offset > textView.getHeight()) {
-            textView.scrollTo(0, offset - textView.getHeight());
+    private void parse() {
+        if (buff.size() < 2) return;
+
+        byte[] input = buff.toByteArray();
+        buff.reset();
+
+
+        if (!isEndingWithCR(input)) return;
+
+        if (input[0] == 0x40) {
+            final String hex = HexUtil.formatHexString(input);
+
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    TextView textView = (TextView) contentView.findViewById(R.id.tvcu);
+                    textView.setText(hex);
+                }
+            });
+
+            return;
+        }
+
+
+
+        String packetX = new String(input);
+        Log.e("xxxx", "---------->" + packetX);
+
+        String commandX = packetX.substring(0, 2);
+
+        if (commandX.equals("ID")) {
+            final String id = packetX.substring(3, 19);
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    TextView textView = (TextView) contentView.findViewById(R.id.tvID);
+                    textView.setText(id);
+                }
+            });
+        }
+
+        if (commandX.equals("IS")) {
+            final String serialNumber = packetX.substring(3, 19);
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    TextView textView = (TextView) contentView.findViewById(R.id.tvIS);
+                    textView.setText(serialNumber);
+                }
+            });
+        }
+
+        if (commandX.equals("LS")) {
+            final String status = packetX.substring(3, 19);
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    TextView textView = (TextView) contentView.findViewById(R.id.tvLS);
+                    textView.setText(status);
+                }
+            });
+        }
+
+        if (commandX.equals("BL")) {
+            final String status = packetX.substring(3, 19);
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    TextView textView = (TextView) contentView.findViewById(R.id.tvblaa55);
+                    textView.setText(status);
+                }
+            });
+        }
+
+        if (commandX.equals("BU")) {
+            final String status = packetX.substring(3, 19);
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    TextView textView = (TextView) contentView.findViewById(R.id.tvbuaa55);
+                    textView.setText(status);
+                }
+            });
+        }
+
+        if (commandX.equals("CD")) {
+            final String status = packetX.substring(3, 19);
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    TextView textView = (TextView) contentView.findViewById(R.id.tvcd);
+                    textView.setText(status);
+                }
+            });
         }
     }
 
-    private void refreshRate(int sent, int received) {
-        Log.e("refresh", sent + ":" + received);
-        totalSent += sent;
-        totalReceived += received;
-
-        long currentTime = new Date().getTime();
-
-        Log.e("xxxx", "elapsed:" + (currentTime - startTime));
-
-        double sentSpeed = (double)totalSent / (double) (currentTime - startTime) * 1000.0d;
-        double receivedSpeed = (double)totalReceived / (double) (currentTime - startTime) * 1000.0d;
-
-        TextView textView;
-        textView = (TextView) contentView.findViewById(R.id.textViewSent);
-        textView.setText("Total Sent : " + totalSent + " B");
-
-        textView = (TextView) contentView.findViewById(R.id.textViewSentSpeed);
-        textView.setText(String.format("%.2f", sentSpeed) + " B/s");
-
-        textView = (TextView) contentView.findViewById(R.id.textViewReceived);
-        textView.setText("Total Received : " + totalReceived + " B");
-
-        textView = (TextView) contentView.findViewById(R.id.textViewReceivedSpeed);
-        textView.setText(String.format("%.2f", receivedSpeed) + " B/s");
-
-        textView = (TextView) contentView.findViewById(R.id.textViewErrors);
-        textView.setText("Error Packets : " + totalError + "/" + (totalSent/20));
-
-//        if (sent == 0 && received == 0) {
-//            textView = (TextView) contentView.findViewById(R.id.textViewSentSpeed);
-//            textView.setText("? B/s");
-//
-//            textView = (TextView) contentView.findViewById(R.id.textViewReceivedSpeed);
-//            textView.setText("? B/s");
-//
-//        }
-
-
-    }
-
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
+    private boolean isEndingWithCR(byte[] input) {
+        byte cr = input[input.length - 1];
+        return (cr == 0x0d);
     }
 
     @Override
@@ -419,18 +508,4 @@ public class CommandFragment extends Fragment {
         super.onDetach();
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
-    }
 }

@@ -3,88 +3,226 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:layout_margin="15dp">
+    >
 
-    <LinearLayout
-        android:id="@+id/layout_container"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_height="match_parent">
 
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="MTU" />
-
-        <EditText
-            android:id="@+id/editCommand"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ems="10"
-            android:inputType="textPersonName"
-            android:text="200"
-            android:textSize="12sp" />
+            android:orientation="vertical"
+            android:padding="15dp"
+            >
 
-    </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-    <Button
-        android:id="@+id/Write"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Start" />
+                <Button
+                    android:id="@+id/btClear"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="CLEAR"/>
 
-    <TextView
-        android:id="@+id/textViewSent"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Bytes Sent : 0" />
+            </LinearLayout>
 
-    <TextView
-        android:id="@+id/textViewSentSpeed"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=" KB/s" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/textViewReceived"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Bytes Received : 0" />
+                <Button
+                    android:id="@+id/btID"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ID"/>
 
-    <TextView
-        android:id="@+id/textViewReceivedSpeed"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=" KB/s" />
+                <TextView
+                    android:id="@+id/tvID"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:background="#11000000"
+                    android:gravity="end|center"
+                    />
 
-    <TextView
-        android:id="@+id/textViewErrors"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Error Packets : 0" />
+            </LinearLayout>
 
-    <TextView
-        android:id="@+id/console"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:fadeScrollbars="false"
-        android:scrollbars="vertical"
-        android:text="console started\n"
-        android:textSize="13sp"
-        android:visibility="gone" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-    <Button
-        android:id="@+id/clear_console"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Clear Console"
-        android:visibility="gone" />
+                <Button
+                    android:id="@+id/btIS"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="IS"/>
 
+                <TextView
+                    android:id="@+id/tvIS"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:background="#11000000"
+                    android:gravity="end|center"
+                    />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:id="@+id/btLM0F"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LM:0F"/>
+
+                <Button
+                    android:id="@+id/btLM1E"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LM:1E"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:id="@+id/btLS"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LS"/>
+
+                <TextView
+                    android:id="@+id/tvLS"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:background="#11000000"
+                    android:gravity="end|center"
+                    />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:id="@+id/btblaa55"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="BL:AA55"/>
+
+                <TextView
+                    android:id="@+id/tvblaa55"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:background="#11000000"
+                    android:gravity="end|center"
+                    />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:id="@+id/btbuaa55"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="BU:AA55"/>
+
+                <TextView
+                    android:id="@+id/tvbuaa55"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:background="#11000000"
+                    android:gravity="end|center"
+                    />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <Button
+                        android:id="@+id/btcd"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="CD"/>
+
+                    <EditText
+                        android:id="@+id/etcd"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="0000"
+                        android:hint="Address"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvcd"
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp"
+                    android:background="#11000000"
+                    />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <Button
+                        android:id="@+id/btcu"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="CU"/>
+
+                    <EditText
+                        android:id="@+id/etcu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="0000"
+                        android:hint="Address"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvcu"
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp"
+                    android:background="#11000000"
+                    />
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>
