@@ -122,15 +122,11 @@
                     android:layout_height="wrap_content"
                     android:text="BL:AA55"/>
 
-                <TextView
-                    android:id="@+id/tvblaa55"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginBottom="5dp"
-                    android:background="#11000000"
-                    android:gravity="end|center"
-                    />
+                <Button
+                    android:id="@+id/btbuaa55"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="BU:AA55"/>
 
             </LinearLayout>
 
@@ -138,20 +134,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <Button
-                    android:id="@+id/btbuaa55"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="BU:AA55"/>
-
                 <TextView
-                    android:id="@+id/tvbuaa55"
+                    android:id="@+id/tvbu"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginBottom="5dp"
+                    android:layout_height="100dp"
                     android:background="#11000000"
-                    android:gravity="end|center"
                     />
 
             </LinearLayout>
@@ -159,6 +146,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:visibility="gone"
                 android:orientation="vertical">
 
                 <LinearLayout
@@ -192,7 +180,9 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:visibility="gone"
+                >
 
                 <LinearLayout
                     android:layout_width="match_parent"

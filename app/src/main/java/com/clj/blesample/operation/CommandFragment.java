@@ -32,9 +32,11 @@ import org.w3c.dom.Text;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -145,10 +147,10 @@ public class CommandFragment extends Fragment {
                 textView.setText("");
                 textView = (TextView) contentView.findViewById(R.id.tvLS);
                 textView.setText("");
-                textView = (TextView) contentView.findViewById(R.id.tvblaa55);
-                textView.setText("");
-                textView = (TextView) contentView.findViewById(R.id.tvbuaa55);
-                textView.setText("");
+//                textView = (TextView) contentView.findViewById(R.id.tvblaa55);
+//                textView.setText("");
+//                textView = (TextView) contentView.findViewById(R.id.tvbuaa55);
+//                textView.setText("");
                 textView = (TextView) contentView.findViewById(R.id.tvcd);
                 textView.setText("");
                 textView = (TextView) contentView.findViewById(R.id.tvcu);
@@ -203,6 +205,7 @@ public class CommandFragment extends Fragment {
                 sendBLAA55();
             }
         });
+        button.setEnabled(false);
 
         button = v.findViewById(R.id.btbuaa55);
         button.setOnClickListener(new View.OnClickListener() {
@@ -259,8 +262,36 @@ public class CommandFragment extends Fragment {
     }
 
     private void sendBLAA55() {
+        sendBlock(0);
+    }
+
+    void sendBlock(int block) {
         byte[] packet = makePacket("BL", "AA55");
         write(packet);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try {
+
+            if (block == 0) {
+                outputStream.write(0x40);
+                outputStream.write(pageAddress);
+                outputStream.write(pageData, 0, 12);
+            } else {
+                outputStream.write(0x25);
+                outputStream.write(pageData, 12 + (block - 1) * 16, 16);
+            }
+            // add 2C
+            outputStream.write(0);
+            outputStream.write(0);
+
+            // add CR
+            outputStream.write(0x0d);
+
+            write(outputStream.toByteArray());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void sendBUAA55() {
@@ -350,6 +381,35 @@ public class CommandFragment extends Fragment {
 
     }
 
+    void makeResponse(byte[] pageAddress) {
+        String packet = "P";
+
+        // add page address
+        packet += "0000";
+
+        // add block number
+        packet += "0";
+
+        // add CRC
+        packet += "00000000";
+
+        // add PAD4
+        packet += "    "; // 4 spaces
+
+        // add 2C
+        packet += "00";
+
+        // add CR
+        packet += "\r";
+
+        byte[] raw = packet.getBytes();
+        raw[1] = pageAddress[0];
+        raw[2] = pageAddress[1];
+        raw[3] = pageAddress[2];
+        raw[4] = pageAddress[3];
+        write(raw);
+    }
+
     private void openNotifiy(final BleDevice bleDevice, final BluetoothGattCharacteristic characteristic) {
         BleManager.getInstance().notify(
                 bleDevice,
@@ -396,29 +456,70 @@ public class CommandFragment extends Fragment {
                 });
     }
 
+    int pageSize = 64;
+    int lengthOfPageAddress = 4;
+    int block = 0;
+    byte[] pageData = new byte[pageSize];
+    byte[] pageAddress = new byte[lengthOfPageAddress];
+
     private void parse() {
         if (buff.size() < 2) return;
 
         byte[] input = buff.toByteArray();
         buff.reset();
 
-
         if (!isEndingWithCR(input)) return;
 
-        if (input[0] == 0x40) {
-            final String hex = HexUtil.formatHexString(input);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(input);
 
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    TextView textView = (TextView) contentView.findViewById(R.id.tvcu);
-                    textView.setText(hex);
-                }
-            });
+        int header = inputStream.read();
 
+        if (header == 0x40) {
+            inputStream.read(pageAddress, 0, lengthOfPageAddress);
+            inputStream.read(pageData, 0, 12);
+            block = 1;
             return;
         }
 
+        if (header == 0x25) {
+            inputStream.read(pageData, 12 + (block - 1) * 16, 16);
+            block ++;
+            if (block >= 4) {
+                block = 0;
+                makeResponse(pageAddress);
+
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Button button = contentView.findViewById(R.id.btblaa55);
+                        button.setEnabled(true);
+
+                        String text = HexUtil.formatHexString(pageAddress) + ":";
+                        for (int i = 0; i < 4; i ++) {
+                            text += "\n" + HexUtil.formatHexString(Arrays.copyOfRange(pageData, i * 16, i * 16 + 16));
+                        }
+
+                        TextView textView = (TextView) contentView.findViewById(R.id.tvbu);
+                        textView.setText(text);
+                    }
+                });
+            }
+            return;
+        }
+
+        if (header == 0x50) {
+            int block = input[5];
+            if (block < 4)
+                sendBlock(block);
+            return;
+        }
+
+        if (header == 0x46) {
+            int block = input[5];
+            if (block < 5)
+                sendBlock(block - 1);
+            return;
+        }
 
 
         String packetX = new String(input);
@@ -438,7 +539,7 @@ public class CommandFragment extends Fragment {
         }
 
         if (commandX.equals("IS")) {
-            final String serialNumber = packetX.substring(3, 19);
+            final String serialNumber = packetX.substring(3, 39);
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -459,6 +560,7 @@ public class CommandFragment extends Fragment {
             });
         }
 
+        /*
         if (commandX.equals("BL")) {
             final String status = packetX.substring(3, 19);
             getActivity().runOnUiThread(new Runnable() {
@@ -480,6 +582,7 @@ public class CommandFragment extends Fragment {
                 }
             });
         }
+        */
 
         if (commandX.equals("CD")) {
             final String status = packetX.substring(3, 19);
