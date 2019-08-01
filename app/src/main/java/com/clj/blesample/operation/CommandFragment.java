@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
@@ -31,6 +32,10 @@ import org.w3c.dom.Text;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
@@ -205,12 +210,13 @@ public class CommandFragment extends Fragment {
                 sendBLAA55();
             }
         });
-        button.setEnabled(false);
+//        button.setEnabled(false);
 
         button = v.findViewById(R.id.btbuaa55);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                clearFile();
                 sendBUAA55();
             }
         });
@@ -262,36 +268,49 @@ public class CommandFragment extends Fragment {
     }
 
     private void sendBLAA55() {
-        sendBlock(0);
-    }
+        block = 0;
 
-    void sendBlock(int block) {
         byte[] packet = makePacket("BL", "AA55");
         write(packet);
 
+        sendBlock();
+    }
+
+    void sendBlock() {
+
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try {
 
-            if (block == 0) {
-                outputStream.write(0x40);
-                outputStream.write(pageAddress);
-                outputStream.write(pageData, 0, 12);
-            } else {
-                outputStream.write(0x25);
-                outputStream.write(pageData, 12 + (block - 1) * 16, 16);
-            }
-            // add 2C
-            outputStream.write(0);
-            outputStream.write(0);
+        final byte[] pageData = readFile(block);
 
-            // add CR
-            outputStream.write(0x0d);
-
-            write(outputStream.toByteArray());
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (block % 4 == 0) {
+            outputStream.write(0x40);
+//                outputStream.write(pageAddress);
+            outputStream.write(pageData, 0, 16);
+        } else {
+            outputStream.write(0x25);
+            outputStream.write(pageData, 0, 16);
         }
+        // add 2C
+        outputStream.write(0);
+        outputStream.write(0);
+
+        // add CR
+        outputStream.write(0x0d);
+
+        final byte[] raw = outputStream.toByteArray();
+        write(raw);
+
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                String text = HexUtil.formatHexString(raw);
+                TextView textView = (TextView) contentView.findViewById(R.id.tvbu);
+                textView.setText(text);
+
+            }
+        });
+
+        block++;
     }
 
     private void sendBUAA55() {
@@ -456,6 +475,47 @@ public class CommandFragment extends Fragment {
                 });
     }
 
+    private void clearFile() {
+        try {
+            FileOutputStream fos = getActivity().openFileOutput("page.bin", Context.MODE_PRIVATE);
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void writeToFile(byte[] data) {
+        try {
+            FileOutputStream fos = getActivity().openFileOutput("page.bin", Context.MODE_APPEND);
+            fos.write(data);
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private byte[] readFile(int block) {
+        byte[] buff = new byte[16];
+
+        try {
+            FileInputStream fis = getActivity().openFileInput("page.bin");
+            fis.skip(block * 16);
+            if (fis.read(buff, 0, 16) > 0) {
+                Log.e("------->", HexUtil.formatHexString(buff));
+            }
+            fis.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return buff;
+    }
+
     int pageSize = 64;
     int lengthOfPageAddress = 4;
     int block = 0;
@@ -476,18 +536,24 @@ public class CommandFragment extends Fragment {
 
         if (header == 0x40) {
             inputStream.read(pageAddress, 0, lengthOfPageAddress);
-            inputStream.read(pageData, 0, 12);
+            pageData[0] = pageAddress[0];
+            pageData[1] = pageAddress[1];
+            pageData[2] = pageAddress[2];
+            pageData[3] = pageAddress[3];
+            inputStream.read(pageData, 4, 12);
             block = 1;
             return;
         }
 
         if (header == 0x25) {
-            inputStream.read(pageData, 12 + (block - 1) * 16, 16);
+            inputStream.read(pageData, 16 + (block - 1) * 16, 16);
             block ++;
             if (block >= 4) {
                 block = 0;
                 makeResponse(pageAddress);
+                sendBUAA55();
 
+                writeToFile(pageData);
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -508,16 +574,18 @@ public class CommandFragment extends Fragment {
         }
 
         if (header == 0x50) {
-            int block = input[5];
-            if (block < 4)
-                sendBlock(block);
+//            int block = input[5];
+//            if (block < 4)
+            if ((block / 4) < 0xDA)
+                sendBlock();
             return;
         }
 
         if (header == 0x46) {
-            int block = input[5];
-            if (block < 5)
-                sendBlock(block - 1);
+//            int block = input[5];
+//            if (block < 5)
+            block --;
+                sendBlock();
             return;
         }
 

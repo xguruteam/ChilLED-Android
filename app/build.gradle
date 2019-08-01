@@ -8,8 +8,8 @@ android {
         applicationId "com.clj.blesample"
         minSdkVersion 14
         targetSdkVersion 27
-        versionCode 234
-        versionName "2.3.062"
+        versionCode 237
+        versionName "2.3.068"
         setProperty("archivesBaseName", "ChilLED-$versionName($versionCode)")
     }
     buildTypes {
